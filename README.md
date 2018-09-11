@@ -2,10 +2,10 @@
 
 ## Requirements
 
-** Necessary** 
+**Necessary** 
 * [NodeJS](https://nodejs.org/es/)
 
-** Good to have **
+**Good to hav**
 * [Git & Git Bash](https://git-scm.com/downloads)
 * [Visual Studio Code](https://code.visualstudio.com/)
 
@@ -28,7 +28,7 @@ After the requirements are installed download the project cloning the repository
 
 Open the project preferably with VS Code, then open a terminal in the directory of the project (this can be done in the same VS Code, clicking in debug and then the terminal icon).
 
-** Install Dependencies ** 
+**Install Dependencies** 
 All the dependencies are managed with npm (node package manager) with the exception of ga & ga.plugins which are placed in the src/vendors dir manually. To install the depencies run the command ```npm install``` in the project root directory (the root have a package.json file).
 
 After the dependencies are installed you can use the dev enviroment with the command ```npm run start``` this will start a static web server and open a webpage with the code. All changes that are made in the code while this is running will be automatically compile. 
