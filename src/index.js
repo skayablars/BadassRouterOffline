@@ -6,6 +6,7 @@ import ImgRouter from './assets/images/router-x2.png';
 import ImgRayBeam from './assets/images/rayBeam.png';
 import ImgFacebook from './assets/images/facebook.png';
 import ImgGamepad from './assets/images/gamepad.png';
+import ImgWikipedia from './assets/images/wikipedia.png';
 
 import ImgSound from './assets/images/sound.png';
 import ImgText from './assets/images/text.png';
@@ -18,6 +19,7 @@ const engine = ga(config.CANVAS_WIDTH, config.CANVAS_HEIGHT, setup, [
   ImgRouter,
   ImgFacebook,
   ImgGamepad,
+  ImgWikipedia,
   ImgRayBeam,
   SoundShoot,
   ImgSound,
@@ -35,6 +37,9 @@ let enemiesFrecuencyFacebook = 80;
 let enemiesTimerFacebook = 0;
 let enemiesFrecuencyGamepad = 100;
 let enemiesTimerGamepad = 0;
+let enemiesFrecuencyWikipedia = 100;
+let enemiesTimerWikipedia = 0;
+
 
 
 let enemies = [];
