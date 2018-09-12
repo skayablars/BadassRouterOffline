@@ -3,26 +3,35 @@ import * as config from './config';
 
 // Asssets
 import ImgRouter from './assets/images/router-x2.png';
-import ImgFacebook from './assets/images/facebook-x2.png';
-import SoundShoot from './assets/sounds/shoot.mp3';
+import ImgFacebook from './assets/images/facebook.png';
+import SoundShoot from './assets/sounds/shoot.wav';
 import ImgRayBeam from './assets/images/rayBeam.png';
+
+import ImgSound from './assets/images/sound.png';
+import ImgText from './assets/images/text.png';
+import ImgVideo from './assets/images/video.png';
+import ImgImage from './assets/images/image.png';
 
 const engine = ga(config.CANVAS_WIDTH, config.CANVAS_HEIGHT, setup, [
   ImgRouter,
   ImgFacebook,
   ImgRayBeam,
-  SoundShoot
+  SoundShoot,
+  ImgSound,
+  ImgText, 
+  ImgVideo,
+  ImgImage
 ]);
 engine.start();
 
-
-let router, shootSound, message, statusBar, gameScene, gameOverScene;
+let router, shootSound, message,  gameScene, gameOverScene;
+let statusBar, healthBar;
 let statusBarIndicators = [];
-let invincibleModeTimer = config.ROUTER_INVINCIBLE_MODE_FRAMES;
 let enemiesFrecuency = 100;
 let enemiesTimer = 0;
 let enemies = [];
 let rayBeams = [];
+let items = [];
 
 function setup() {
   engine.canvas.background = config.BLACK;
@@ -33,22 +42,29 @@ function setup() {
   // status bar
   statusBar = engine.rectangle(engine.canvas.width, config.STATUS_BAR_HEIGHT, config.STATUS_BAR_COLOR);
   
-
   config.DATA_OBJECTS.forEach(function(dataObject, index) {  
-    const statusBarIndicator = engine.circle(config.STATUS_BAR_DIAMETER, config.WHITE)
-    statusBarIndicator.x = config.STATUS_BAR_SPACE  * (index + 1);
+    const statusBarIndicator = engine.sprite(dataObject.path);
+    statusBarIndicator.x = (config.STATUS_BAR_SPACE + 4 * index )  * (index + 1);
     statusBarIndicator.y = (statusBar.height / 2) - statusBarIndicator.halfHeight;
+    statusBarIndicator.scaleX = 0.8;
+    statusBarIndicator.scaleY = 0.8;
+    statusBarIndicator.alpha = 0.8;
     statusBarIndicator.type = dataObject.type;
     statusBarIndicators.push(statusBarIndicator);
   });
+
+  // health bar
+  const outerBar = engine.rectangle(config.ROUTER_LIVES, 16, config.BLACK);
+  const innerBar = engine.rectangle(config.ROUTER_LIVES, 16, config.GREEN);  
+  healthBar = engine.group(outerBar, innerBar);
+  healthBar.inner = innerBar;
+  healthBar.x = engine.canvas.width - healthBar.width - 10;
+  healthBar.y = (statusBar.height / 2) - healthBar.halfHeight;
 
   // sprite: router
   router = engine.sprite(ImgRouter);
   router.x = 20;
   router.y = (engine.canvas.height / 2) - router.halfHeight;
-  router.lives = config.ROUTER_LIVES;
-  router.wasBeaten = false;
-  router.invincibleMode = false;
   gameScene.addChild(router);
 
   // sound: shoot
@@ -86,6 +102,8 @@ function setup() {
 }
 
 function play() {
+  let routerHit = false;
+
   engine.move(router);
   engine.contain(router, engine.stage.localBounds);
 
@@ -97,9 +115,10 @@ function play() {
     const enemyFacebook = engine.sprite(ImgFacebook);
     enemyFacebook.x = engine.canvas.width + enemyFacebook.width;
     enemyFacebook.y = engine.randomInt(config.STATUS_BAR_HEIGHT, engine.canvas.height - enemyFacebook.height);
+    enemyFacebook.itemType = 'Image'; 
+    enemyFacebook.itemPath = 'images/image.png';
+    enemyFacebook.itemDrop = 100;
     enemyFacebook.vx = config.DIRECTION_LEFT;
-    enemyFacebook.scaleX = 0.8;
-    enemyFacebook.scaleY = 0.8;
     enemiesTimer = 0;
     enemies.push(enemyFacebook);
     gameScene.addChild(enemyFacebook);
@@ -122,42 +141,60 @@ function play() {
     }
     
     if (enemyIsDead) {
+      // drop item 
+      if (engine.randomInt(0, 100) <= enemy.itemDrop || 0) {
+        if (items.findIndex(item => item.type === enemy.itemType) === -1) {
+          const item = engine.sprite(enemy.itemPath);
+          item.x = enemy.x;
+          item.y = enemy.y;
+          item.type = enemy.itemType;
+          item.vx = config.DIRECTION_LEFT;
+          items.push(item);
+          gameScene.addChild(item);
+        } 
+      }
+
       enemy.vx = 0;
       gameScene.removeChild(enemy);
       return false;
     }
 
     if (engine.hitTestRectangle(router, enemy)) {
-      router.wasBeaten = true;
+      routerHit = true;
     } 
 
     return true;
   });
 
-  if (router.wasBeaten && !router.invincibleMode) {
-    router.lives -= config.ROUTER_LIVES_COLLISION;
-    console.log(`router tiene: ${router.lives} vidas`);
-    router.invincibleMode = true;
-    router.wasBeaten = false;
-  }
 
-  if (router.invincibleMode) {
-    if (invincibleModeTimer === 0) {
-      invincibleModeTimer = config.ROUTER_INVINCIBLE_MODE_FRAMES;
-      router.invincibleMode = false;
-      router.alpha = 1;
-    } else {
-      invincibleModeTimer -=  config.ROUTER_INVINCIBLE_MODE_FRAMES_SUBSTRACT;
-      router.alpha = 0.5;
+  items = items.filter(function(item) {
+    const itemHitsEdges = engine.contain(item, engine.stage.localBounds);
+    let itemIsGone = (itemHitsEdges === 'left');
+
+    if (itemIsGone) {
+      item.vx = 0;
+      gameScene.removeChild(item);
+      return false;
     }
-  } 
 
-  if (router.lives <= 0) {
-    engine.state = end;
-    message.content = 'You Lost';
-  } 
+    return true;
+  });
 
   engine.move(enemies);
+  engine.move(items);
+
+
+  if (routerHit) {
+    router.alpha = 0.5;
+    healthBar.inner.width -= 1;
+  } else {
+    router.alpha = 1;
+  }
+
+  if (healthBar.inner.width < 0) {
+    engine.state = end;
+    message.content = "You lost!";
+  }
 }
 
 
