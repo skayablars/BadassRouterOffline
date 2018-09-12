@@ -3,18 +3,21 @@ import * as config from './config';
 
 // Asssets
 import ImgRouter from './assets/images/router-x2.png';
-import ImgFacebook from './assets/images/facebook.png';
-import SoundShoot from './assets/sounds/shoot.wav';
 import ImgRayBeam from './assets/images/rayBeam.png';
+import ImgFacebook from './assets/images/facebook.png';
+import ImgGamepad from './assets/images/gamepad.png';
 
 import ImgSound from './assets/images/sound.png';
 import ImgText from './assets/images/text.png';
 import ImgVideo from './assets/images/video.png';
 import ImgImage from './assets/images/image.png';
 
+import SoundShoot from './assets/sounds/shoot.wav';
+
 const engine = ga(config.CANVAS_WIDTH, config.CANVAS_HEIGHT, setup, [
   ImgRouter,
   ImgFacebook,
+  ImgGamepad,
   ImgRayBeam,
   SoundShoot,
   ImgSound,
@@ -27,11 +30,17 @@ engine.start();
 let router, shootSound, message,  gameScene, gameOverScene;
 let statusBar, healthBar;
 let statusBarIndicators = [];
-let enemiesFrecuency = 100;
-let enemiesTimer = 0;
+
+let enemiesFrecuencyFacebook = 80;
+let enemiesTimerFacebook = 0;
+let enemiesFrecuencyGamepad = 100;
+let enemiesTimerGamepad = 0;
+
+
 let enemies = [];
 let rayBeams = [];
 let items = [];
+
 
 function setup() {
   engine.canvas.background = config.BLACK;
@@ -48,7 +57,8 @@ function setup() {
     statusBarIndicator.y = (statusBar.height / 2) - statusBarIndicator.halfHeight;
     statusBarIndicator.scaleX = 0.8;
     statusBarIndicator.scaleY = 0.8;
-    statusBarIndicator.alpha = 0.8;
+    statusBarIndicator.alpha = 0.4;
+    statusBarIndicator.on = false;
     statusBarIndicator.type = dataObject.type;
     statusBarIndicators.push(statusBarIndicator);
   });
@@ -109,19 +119,47 @@ function play() {
 
   engine.move(rayBeams);
 
-  enemiesTimer += 1;
-
-  if (enemiesTimer === enemiesFrecuency) {
+  // ENEMY: FACEBOOK
+  enemiesTimerFacebook += 1;
+  if (enemiesTimerFacebook === enemiesFrecuencyFacebook) {
     const enemyFacebook = engine.sprite(ImgFacebook);
     enemyFacebook.x = engine.canvas.width + enemyFacebook.width;
     enemyFacebook.y = engine.randomInt(config.STATUS_BAR_HEIGHT, engine.canvas.height - enemyFacebook.height);
     enemyFacebook.itemType = 'Image'; 
     enemyFacebook.itemPath = 'images/image.png';
-    enemyFacebook.itemDrop = 100;
-    enemyFacebook.vx = config.DIRECTION_LEFT;
-    enemiesTimer = 0;
+    enemyFacebook.itemDrop = 10;
+    enemyFacebook.type = 'facebook';
+    enemyFacebook.speed = 2;
+    enemyFacebook.vx = config.DIRECTION_LEFT * enemyFacebook.speed;
+
+    enemiesTimerFacebook = 0;
     enemies.push(enemyFacebook);
     gameScene.addChild(enemyFacebook);
+  }
+
+  // ENEMY: GAMEPAD  
+  
+  if (statusBarIndicators.findIndex(indicator => (indicator.type === 'Image') && indicator.on) !== -1) {    
+    enemiesTimerGamepad += 1;
+  }
+  
+  if (enemiesTimerGamepad === enemiesFrecuencyGamepad) {    
+    const enemyGamepad = engine.sprite(ImgGamepad);
+    enemyGamepad.x = engine.canvas.width + enemyGamepad.width;
+    enemyGamepad.y = engine.randomInt(config.STATUS_BAR_HEIGHT, engine.canvas.height - enemyGamepad.height);
+    enemyGamepad.itemType = 'Video'; 
+    enemyGamepad.itemPath = 'images/video.png';
+    enemyGamepad.itemDrop = 10;
+    enemyGamepad.type = 'gamepad';
+    enemyGamepad.frames = 15;
+    enemyGamepad.movementFrames = enemyGamepad.frames;
+    enemyGamepad.speed = 3;
+    enemyGamepad.vy = config.DIRECTION_UP * enemyGamepad.speed;
+    enemyGamepad.vx = config.DIRECTION_LEFT  * enemyGamepad.speed;
+
+    enemiesTimerGamepad = 0;
+    enemies.push(enemyGamepad);
+    gameScene.addChild(enemyGamepad);
   }
 
   enemies = enemies.filter(function(enemy) {
@@ -143,7 +181,9 @@ function play() {
     if (enemyIsDead) {
       // drop item 
       if (engine.randomInt(0, 100) <= enemy.itemDrop || 0) {
-        if (items.findIndex(item => item.type === enemy.itemType) === -1) {
+        const itemExist = items.findIndex(item => item.type === enemy.itemType) !== -1;
+        const indicatorExist = statusBarIndicators.findIndex(indicator => (indicator.type === enemy.itemType) && indicator.on) !== -1;
+        if (!itemExist && !indicatorExist) {
           const item = engine.sprite(enemy.itemPath);
           item.x = enemy.x;
           item.y = enemy.y;
@@ -163,6 +203,15 @@ function play() {
       routerHit = true;
     } 
 
+    if (enemy.type === 'gamepad') {
+      if (enemy.movementFrames > 0) {
+        enemy.movementFrames -= 1;
+      } else {
+        enemy.vy *= -1;
+        enemy.movementFrames = enemy.frames;
+      }
+    }
+
     return true;
   });
 
@@ -171,6 +220,14 @@ function play() {
     const itemHitsEdges = engine.contain(item, engine.stage.localBounds);
     let itemIsGone = (itemHitsEdges === 'left');
 
+
+    if (engine.hitTestRectangle(item, router)) {
+      const indicator = statusBarIndicators.find(indicator => indicator.type === item.type);
+      indicator.alpha = 1;
+      indicator.on = true;
+      itemIsGone = true;
+    }
+    
     if (itemIsGone) {
       item.vx = 0;
       gameScene.removeChild(item);
