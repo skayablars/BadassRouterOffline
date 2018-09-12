@@ -253,9 +253,10 @@ function play() {
     router.alpha = 1;
   }
 
-  if (healthBar.inner.width < 0) {
+  if (healthBar.inner.width <= 0) {
     engine.state = end;
     message.content = "You lost!";
+    console.log(healthBar);
   }
 }
 
