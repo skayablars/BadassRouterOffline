@@ -36,3 +36,16 @@ export const ROUTER_SHOOT_OFFSET = 40;
 export const ROUTER_SHOOT_SPEED = 8;
 export const ROUTER_LIVES = 200;
 
+export const ANGLES = [
+  0,
+  30,
+  45,
+  60,
+  90,
+  120,
+  135,
+  150,
+  180,
+  270,
+  360
+];

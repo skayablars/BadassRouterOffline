@@ -46,6 +46,14 @@ let enemies = [];
 let rayBeams = [];
 let items = [];
 
+function degreeToRadian(degree) {
+  return (degree * Math.PI) / 180;
+}
+
+function randomDegree(degrees) {
+  return degreeToRadian(engine.randomInt(0, degrees.length));
+}
+
 
 function setup() {
   engine.canvas.background = config.BLACK;
@@ -166,6 +174,34 @@ function play() {
     enemies.push(enemyGamepad);
     gameScene.addChild(enemyGamepad);
   }
+
+  
+
+  // ENEMY: WIKIPEDIA  
+  
+  if (statusBarIndicators.findIndex(indicator => (indicator.type === 'Video') && indicator.on) !== -1) {    
+    enemiesTimerWikipedia += 1;
+  }
+  
+  if (enemiesTimerWikipedia === enemiesFrecuencyGamepad) {    
+    const enemyWikipedia = engine.sprite(ImgWikipedia);
+    enemyWikipedia.x = engine.canvas.width + enemyWikipedia.width;
+    enemyWikipedia.y = engine.randomInt(config.STATUS_BAR_HEIGHT, engine.canvas.height - enemyWikipedia.height);
+    enemyWikipedia.itemType = 'Text'; 
+    enemyWikipedia.itemPath = 'images/text.png';
+    enemyWikipedia.itemDrop = 10;
+    enemyWikipedia.type = 'wikipedia';
+    enemyWikipedia.speed = 1;
+    enemyWikipedia.vx = config.DIRECTION_LEFT  * enemyWikipedia.speed;
+
+    enemiesTimerWikipedia = 0;
+
+    engine.shoot(enemyWikipedia, )
+
+    enemies.push(enemyWikipedia);
+    gameScene.addChild(enemyWikipedia);
+  }
+
 
   enemies = enemies.filter(function(enemy) {
     const enemyHitsEdges = engine.contain(enemy, engine.stage.localBounds);
