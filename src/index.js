@@ -196,8 +196,6 @@ function play() {
 
     enemiesTimerWikipedia = 0;
 
-    engine.shoot(enemyWikipedia, )
-
     enemies.push(enemyWikipedia);
     gameScene.addChild(enemyWikipedia);
   }
